@@ -21,18 +21,28 @@ Abre http://localhost:8000
 
 1. Escribe un lugar (`Antofagasta`) o coordenadas (`-23.6509, -70.3975`)
 2. El mapa marca la zona (±1°)
-3. Panel derecho: imagen NASA Worldview (color verdadero / luces nocturnas / MODIS)
-4. Abajo: thumbnails Sentinel-2 de los últimos 7 días (fecha + % nubes)
+3. Panel derecho: imagen NASA Worldview (color verdadero / luces nocturnas / MODIS / IMERG)
+4. Panel izquierdo: módulos DARKSKY / FIRE / TAILINGS / RAVINE (overlays en el mapa)
+5. Abajo: thumbnails Sentinel-2 de los últimos 7 días (clic para ampliar)
 
-No requiere API keys para el flujo básico (Worldview Snapshot, STAC search, Nominatim).
+No requiere API keys para el flujo básico. Opcional: `FIRMS_MAP_KEY` para API Area NRT de FIRMS (sin key se usa CSV público regional 24h).
 
 Variables opcionales:
 
 ```bash
 ECOAVES_HOST=0.0.0.0
 ECOAVES_PORT=8000
+FIRMS_MAP_KEY=
 ```
 
+### Módulos
+
+| Módulo | Fuente | En el mapa |
+| --- | --- | --- |
+| DARKSKY | VIIRS Day/Night Band (Worldview) | Overlay semitransparente |
+| FIRE | NASA FIRMS VIIRS | Marcadores de focos |
+| TAILINGS | Sentinel-2 STAC | Comparar antes/después |
+| RAVINE | IMERG Precipitation Rate | Overlay precipitación |
 ## CLI offline (DARKSKY)
 
 ```bash
