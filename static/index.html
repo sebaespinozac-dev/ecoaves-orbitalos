@@ -11,7 +11,7 @@
   <header class="topbar">
     <div class="brand">
       <span class="brand-name">ECOAVES OrbitalOS</span>
-      <span class="brand-sub">Visor satelital</span>
+      <span class="brand-sub">Visor satelital · monitoreo ambiental</span>
     </div>
     <form id="search-form" class="search-form" autocomplete="off">
       <input
@@ -24,31 +24,84 @@
     </form>
   </header>
 
-  <main class="layout">
+  <div class="workspace">
+    <aside class="modules-panel" id="modules-panel" aria-label="Módulos de monitoreo">
+      <div class="modules-head">
+        <h2>Módulos</h2>
+        <button type="button" id="toggle-modules" class="ghost" title="Colapsar">«</button>
+      </div>
+
+      <label class="module-item darksky">
+        <input type="checkbox" id="mod-darksky" data-module="darksky" />
+        <span class="mod-icon moon" aria-hidden="true"></span>
+        <span class="mod-text">
+          <strong>DARKSKY</strong>
+          <small>Contaminación lumínica</small>
+        </span>
+      </label>
+
+      <label class="module-item fire">
+        <input type="checkbox" id="mod-fire" data-module="fire" />
+        <span class="mod-icon flame" aria-hidden="true"></span>
+        <span class="mod-text">
+          <strong>FIRE</strong>
+          <small>Incendios forestales</small>
+        </span>
+      </label>
+
+      <label class="module-item tailings">
+        <input type="checkbox" id="mod-tailings" data-module="tailings" />
+        <span class="mod-icon triangle" aria-hidden="true"></span>
+        <span class="mod-text">
+          <strong>TAILINGS</strong>
+          <small>Relaves mineros</small>
+        </span>
+      </label>
+
+      <label class="module-item ravine">
+        <input type="checkbox" id="mod-ravine" data-module="ravine" />
+        <span class="mod-icon drop" aria-hidden="true"></span>
+        <span class="mod-text">
+          <strong>RAVINE</strong>
+          <small>Quebradas / aluviones</small>
+        </span>
+      </label>
+
+      <div id="module-detail" class="module-detail">
+        <p class="muted">Activa un módulo para ver el detalle.</p>
+      </div>
+    </aside>
+
     <section class="map-panel" aria-label="Mapa">
       <div id="map"></div>
       <p id="location-label" class="location-label">Antofagasta, Chile</p>
     </section>
 
-    <section class="image-panel" aria-label="Imágenes satelitales">
-      <div class="controls">
-        <label>
-          Capa
-          <select id="layer-select"></select>
-        </label>
-        <label>
-          Fecha
-          <input id="date-input" type="date" />
-        </label>
-        <button type="button" id="reload-imagery">Actualizar</button>
+    <section class="right-panel" aria-label="Imagen y detalle">
+      <div class="image-panel">
+        <div class="controls">
+          <label>
+            Capa
+            <select id="layer-select"></select>
+          </label>
+          <label>
+            Fecha
+            <input id="date-input" type="date" />
+          </label>
+          <button type="button" id="reload-imagery">Actualizar</button>
+        </div>
+        <figure class="main-image">
+          <img id="snapshot-img" alt="Imagen satelital NASA Worldview" />
+          <figcaption id="snapshot-meta">Cargando…</figcaption>
+        </figure>
       </div>
 
-      <figure class="main-image">
-        <img id="snapshot-img" alt="Imagen satelital NASA Worldview" />
-        <figcaption id="snapshot-meta">Cargando…</figcaption>
-      </figure>
+      <div id="active-module-panel" class="active-module-panel">
+        <h3 id="active-module-title">Panel del módulo</h3>
+        <div id="active-module-body" class="muted">Sin módulo activo.</div>
+      </div>
     </section>
-  </main>
+  </div>
 
   <section class="gallery" aria-label="Historial Sentinel-2">
     <div class="gallery-head">
@@ -57,6 +110,12 @@
     </div>
     <div id="sentinel-gallery" class="gallery-grid"></div>
   </section>
+
+  <div id="lightbox" class="lightbox" hidden>
+    <button type="button" id="lightbox-close" class="lightbox-close">Cerrar</button>
+    <img id="lightbox-img" alt="Sentinel-2 ampliado" />
+    <p id="lightbox-caption"></p>
+  </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/static/app.js"></script>
