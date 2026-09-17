@@ -1,33 +1,60 @@
 # ECOAVES OrbitalOS
 
-DataHub terrestre. Tres fuentes conectadas al Core; DARKSKY usa NASA Black Marble (primaria) y CubeSat UA (secundaria).
+DataHub terrestre + **visor satelital** con imágenes reales de NASA Worldview y Copernicus Sentinel-2.
 
 ## Estado
 
-MVP Core + DataHub + DARKSKY. Visor satelital web (NASA Worldview + Copernicus STAC) en desarrollo.
+- Core + DataHub + DARKSKY (Hito 6)
+- Visor web profesional (Hito 7): geocoding, snapshots NASA, galería Sentinel-2
+- Sin pygame / Matrix
+- CI sin red
 
-## Uso offline (grabaciones HTTP + drop sintético)
+## Visor satelital
 
 ```bash
 cd ecoaves-orbitalos
+pip install ".[server]"
+python3 server.py
+```
+
+Abre http://localhost:8000
+
+1. Escribe un lugar (`Antofagasta`) o coordenadas (`-23.6509, -70.3975`)
+2. El mapa marca la zona (±1°)
+3. Panel derecho: imagen NASA Worldview (color verdadero / luces nocturnas / MODIS)
+4. Abajo: thumbnails Sentinel-2 de los últimos 7 días (fecha + % nubes)
+
+No requiere API keys para el flujo básico (Worldview Snapshot, STAC search, Nominatim).
+
+Variables opcionales:
+
+```bash
+ECOAVES_HOST=0.0.0.0
+ECOAVES_PORT=8000
+```
+
+## CLI offline (DARKSKY)
+
+```bash
 python3 -m pip install pytest
 python3 -m pytest
 python3 cli.py run --drop ./var/drop --db ./var/orbitalos.sqlite3 --batch DEMO --out ./var/reports
 ```
 
-## Fuentes
+## Fuentes DataHub
 
-| Adaptador | Entrada | DARKSKY |
+| Adaptador | Entrada | Uso |
 | --- | --- | --- |
-| `nasa_earthdata` | CMR `granules.umm_json`, fetch GET DATA. Prefiere `VJ146A1`/`VJ246A1` | primaria |
-| `cubesat_ua` | directorio drop `{id}.{kind}.product` + `events.jsonl` | secundaria, sin geo |
-| `copernicus_sentinel` | STAC `sentinel-2-l2a`, OAuth CDSE opcional | no (no hay producto de luces nocturnas) |
-
-Credenciales: `EARTHDATA_TOKEN`, `CDSE_CLIENT_ID`, `CDSE_CLIENT_SECRET` (ver `.env.example`). Nunca en git.
+| `nasa_earthdata` | CMR Black Marble | DARKSKY |
+| `cubesat_ua` | drop local | DARKSKY |
+| `copernicus_sentinel` | STAC S2 L2A | DataHub (no DARKSKY) |
+| `datahub/imagery.py` | Worldview + STAC + Nominatim | Visor web |
 
 ## Dependencias
 
-Runtime: stdlib. Tests: pytest. Servidor web: `pip install ".[server]"`.
+- Runtime CLI/Core: stdlib
+- Tests: `pytest`
+- Servidor: `pip install ".[server]"` → fastapi, uvicorn, httpx
 
 ## Aislamiento UA
 
