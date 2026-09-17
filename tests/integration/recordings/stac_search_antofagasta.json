@@ -1,0 +1,37 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "S2A_MSIL2A_20260910T143751_N0511_R039_T19KBT_20260910T183012",
+      "collection": "sentinel-2-l2a",
+      "bbox": [-71.4, -24.65, -69.4, -22.65],
+      "properties": {
+        "datetime": "2026-09-10T14:37:51Z",
+        "eo:cloud_cover": 12.4
+      },
+      "assets": {
+        "thumbnail": {
+          "href": "https://example.test/thumbnails/s2a_antofagasta.jpg",
+          "type": "image/jpeg"
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "S2B_MSIL2A_20260908T143709_N0511_R039_T19KBT_20260908T182901",
+      "collection": "sentinel-2-l2a",
+      "bbox": [-71.4, -24.65, -69.4, -22.65],
+      "properties": {
+        "datetime": "2026-09-08T14:37:09Z",
+        "eo:cloud_cover": 3.1
+      },
+      "assets": {
+        "thumbnail": {
+          "href": "https://example.test/thumbnails/s2b_antofagasta.jpg",
+          "type": "image/jpeg"
+        }
+      }
+    }
+  ]
+}
