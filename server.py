@@ -20,9 +20,12 @@ from fastapi.staticfiles import StaticFiles
 
 from datahub.http import LiveHttpTransport
 from datahub.imagery import (
+    darksky_status,
+    fetch_precipitation,
     fetch_snapshot,
     geocode,
     list_layers,
+    search_fires,
     search_sentinel,
 )
 
@@ -101,6 +104,56 @@ def api_sentinel(
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=502, detail=f"sentinel search falló: {exc}") from exc
     return {"lat": lat, "lon": lon, "days": days, "products": items}
+
+
+@app.get("/api/fires")
+def api_fires(
+    lat: float = Query(..., ge=-90, le=90),
+    lon: float = Query(..., ge=-180, le=180),
+    days: int = Query(1, ge=1, le=5),
+) -> dict[str, Any]:
+    """Focos activos NASA FIRMS (API Area con MAP_KEY o CSV público)."""
+    try:
+        payload = search_fires(_transport(), lat, lon, days=days)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"FIRMS falló: {exc}") from exc
+    return {"lat": lat, "lon": lon, **payload}
+
+
+@app.get("/api/precipitation")
+def api_precipitation(
+    lat: float = Query(..., ge=-90, le=90),
+    lon: float = Query(..., ge=-180, le=180),
+    date: str | None = Query(None, description="YYYY-MM-DD"),
+    width: int = Query(1024, ge=64, le=2048),
+    height: int = Query(1024, ge=64, le=2048),
+) -> Response:
+    """Imagen IMERG Precipitation Rate (JPEG Worldview)."""
+    date_str = date or date_cls.today().isoformat()
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_str):
+        raise HTTPException(status_code=400, detail="date debe ser YYYY-MM-DD")
+    try:
+        jpeg = fetch_precipitation(
+            _transport(),
+            lat,
+            lon,
+            date_str=date_str,
+            width=width,
+            height=height,
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"precipitation falló: {exc}") from exc
+    return Response(content=jpeg, media_type="image/jpeg")
+
+
+@app.get("/api/darksky")
+def api_darksky(
+    lat: float = Query(..., ge=-90, le=90),
+    lon: float = Query(..., ge=-180, le=180),
+    date: str | None = Query(None),
+) -> dict[str, Any]:
+    """Metadatos del módulo DARKSKY (capa DNB)."""
+    return darksky_status(lat, lon, date_str=date)
 
 
 @app.get("/", response_class=HTMLResponse)

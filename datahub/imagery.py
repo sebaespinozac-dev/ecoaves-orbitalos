@@ -39,9 +39,25 @@ AVAILABLE_LAYERS: list[dict[str, str]] = [
         "name": "Color verdadero (MODIS)",
         "type": "diurno",
     },
+    {
+        "id": "IMERG_Precipitation_Rate",
+        "name": "Precipitación (IMERG)",
+        "type": "precipitacion",
+    },
 ]
 
 LAYER_IDS = frozenset(item["id"] for item in AVAILABLE_LAYERS)
+
+# Night-lights layer used by DARKSKY overlay
+DARKSKY_LAYER = "VIIRS_SNPP_DayNightBand_At_Sensor_Radiance"
+PRECIPITATION_LAYER = "IMERG_Precipitation_Rate"
+
+FIRMS_AREA_BASE = "https://firms.modaps.eosdis.nasa.gov/api/area/csv"
+FIRMS_PUBLIC_SA_CSV = (
+    "https://firms.modaps.eosdis.nasa.gov/data/active_fire/"
+    "suomi-npp-viirs-c2/csv/SUOMI_VIIRS_C2_South_America_24h.csv"
+)
+FIRMS_MAP_KEY_ENV = "FIRMS_MAP_KEY"
 
 _COORD_RE = re.compile(
     r"^\s*(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)\s*$"
@@ -192,6 +208,164 @@ def geocode(
 def list_layers() -> list[dict[str, str]]:
     """Capas Worldview disponibles en el visor."""
     return [dict(item) for item in AVAILABLE_LAYERS]
+
+
+def fetch_precipitation(
+    transport: HttpTransport,
+    lat: float,
+    lon: float,
+    *,
+    date_str: str | None = None,
+    width: int = 1024,
+    height: int = 1024,
+    half_deg: float = 1.0,
+) -> bytes:
+    """JPEG IMERG Precipitation Rate vía Worldview Snapshot."""
+    return fetch_snapshot(
+        transport,
+        lat,
+        lon,
+        date_str=date_str,
+        layer=PRECIPITATION_LAYER,
+        width=width,
+        height=height,
+        half_deg=half_deg,
+    )
+
+
+def search_fires(
+    transport: HttpTransport,
+    lat: float,
+    lon: float,
+    *,
+    days: int = 1,
+    half_deg: float = 1.0,
+    map_key: str | None = None,
+) -> dict[str, Any]:
+    """Busca focos activos NASA FIRMS en el bbox alrededor de (lat, lon).
+
+    Preferencia:
+    1. API Area con FIRMS_MAP_KEY (oficial).
+    2. CSV público regional VIIRS South America 24h (sin auth), filtrado por bbox.
+    """
+    import os
+
+    days = max(1, min(int(days), 5))
+    lat_min, lon_min, lat_max, lon_max = bbox_around(lat, lon, half_deg=half_deg)
+    key = map_key or os.environ.get(FIRMS_MAP_KEY_ENV) or ""
+
+    if key.strip():
+        # FIRMS area: west,south,east,north
+        area = f"{lon_min},{lat_min},{lon_max},{lat_max}"
+        url = f"{FIRMS_AREA_BASE}/{key.strip()}/VIIRS_SNPP_NRT/{area}/{days}"
+        response = transport.request(
+            "GET",
+            url,
+            headers={"User-Agent": USER_AGENT, "Accept": "text/csv"},
+        )
+        fires = _parse_firms_csv(response.text(), lat_min, lon_min, lat_max, lon_max)
+        return {
+            "source": "firms_area_api",
+            "product": "VIIRS_SNPP_NRT",
+            "bbox": [lon_min, lat_min, lon_max, lat_max],
+            "days": days,
+            "count": len(fires),
+            "fires": fires,
+        }
+
+    # Fallback público sin MAP_KEY (archivo regional 24h).
+    response = transport.request(
+        "GET",
+        FIRMS_PUBLIC_SA_CSV,
+        headers={"User-Agent": USER_AGENT, "Accept": "text/csv"},
+    )
+    fires = _parse_firms_csv(response.text(), lat_min, lon_min, lat_max, lon_max)
+    return {
+        "source": "firms_public_csv",
+        "product": "SUOMI_VIIRS_C2_South_America_24h",
+        "bbox": [lon_min, lat_min, lon_max, lat_max],
+        "days": 1,
+        "count": len(fires),
+        "fires": fires,
+        "note": (
+            "Sin FIRMS_MAP_KEY: se usa el CSV público regional 24h. "
+            "Para API Area NRT con day_range configurable, define FIRMS_MAP_KEY."
+        ),
+    }
+
+
+def darksky_status(lat: float, lon: float, *, date_str: str | None = None) -> dict[str, Any]:
+    """Metadatos del módulo DARKSKY (overlay DNB). Sin inventar fotometría."""
+    when = date_str or date.today().isoformat()
+    lat_min, lon_min, lat_max, lon_max = bbox_around(lat, lon)
+    return {
+        "module": "darksky",
+        "layer": DARKSKY_LAYER,
+        "date": when,
+        "bbox": [lon_min, lat_min, lon_max, lat_max],
+        "level": "n/d",
+        "levels": ["normal", "observar", "fiscalizar", "critico"],
+        "note": (
+            "Overlay = VIIRS Day/Night Band (Worldview). "
+            "El nivel cuantitativo (normal→crítico) requiere fotometría Black Marble "
+            "o el reporte DARKSKY con lote CubeSat; no se inventa aquí."
+        ),
+    }
+
+
+def _parse_firms_csv(
+    text: str,
+    lat_min: float,
+    lon_min: float,
+    lat_max: float,
+    lon_max: float,
+) -> list[dict[str, Any]]:
+    """Parsea CSV FIRMS y filtra por bbox."""
+    import csv
+    import io
+
+    if not text or text.lstrip().startswith("<") or "Invalid MAP_KEY" in text:
+        raise RuntimeError(f"FIRMS no devolvió CSV válido: {text[:120]!r}")
+
+    reader = csv.DictReader(io.StringIO(text))
+    fires: list[dict[str, Any]] = []
+    for row in reader:
+        try:
+            flat = float(row.get("latitude") or row.get("lat") or "")
+            flon = float(row.get("longitude") or row.get("lon") or "")
+        except (TypeError, ValueError):
+            continue
+        if not (lat_min <= flat <= lat_max and lon_min <= flon <= lon_max):
+            continue
+        brightness = row.get("bright_ti4") or row.get("brightness") or row.get("bright_ti5")
+        frp = row.get("frp")
+        confidence = row.get("confidence")
+        acq_date = row.get("acq_date") or row.get("acq_datetime") or ""
+        acq_time = row.get("acq_time") or ""
+        date_str = f"{acq_date} {acq_time}".strip()
+        fires.append(
+            {
+                "lat": flat,
+                "lon": flon,
+                "brightness": _as_float(brightness),
+                "frp": _as_float(frp),
+                "confidence": confidence,
+                "date": date_str,
+                "satellite": row.get("satellite"),
+                "daynight": row.get("daynight"),
+            }
+        )
+    fires.sort(key=lambda item: item.get("frp") or 0.0, reverse=True)
+    return fires
+
+
+def _as_float(value: Any) -> float | None:
+    try:
+        if value is None or value == "":
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _asset_href(assets: Mapping[str, Any], key: str) -> Optional[str]:
