@@ -1,0 +1,32 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "FIXTURE-S2L2A-0001",
+      "collection": "sentinel-2-l2a",
+      "synthetic": true,
+      "properties": {
+        "datetime": "2026-01-15T14:32:11Z",
+        "platform": "sentinel-2a",
+        "instruments": ["msi"],
+        "product_type": "S2MSI2A",
+        "processing:level": "L2A"
+      },
+      "geometry": null,
+      "bbox": null,
+      "links": [
+        {
+          "rel": "self",
+          "href": "https://stac.dataspace.copernicus.eu/v1/collections/sentinel-2-l2a/items/FIXTURE-S2L2A-0001"
+        }
+      ],
+      "assets": {
+        "B04": {
+          "title": "red",
+          "href": "fixture://copernicus_sentinel/B04"
+        }
+      }
+    }
+  ]
+}

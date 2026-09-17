@@ -1,0 +1,29 @@
+{
+  "hits": 1,
+  "items": [
+    {
+      "meta": {
+        "concept-id": "G-FIXTURE-VJ146A1-0001",
+        "native-id": "VJ146A1.A2026001.h08v05.002.2026003120000.h5",
+        "provider-id": "LAADS",
+        "recording_note": "CI double; not a real LAADS concept-id"
+      },
+      "umm": {
+        "GranuleUR": "VJ146A1.A2026001.h08v05.002.2026003120000.h5",
+        "TemporalExtent": {
+          "RangeDateTime": {
+            "BeginningDateTime": "2026-01-01T00:00:00.000Z",
+            "EndingDateTime": "2026-01-01T23:59:59.000Z"
+          }
+        },
+        "RelatedUrls": [
+          {
+            "URL": "https://ladsweb.modaps.eosdis.nasa.gov/archive/allData/5200/VJ146A1/fixture.h5",
+            "Type": "GET DATA"
+          }
+        ],
+        "Platforms": [{ "ShortName": "NOAA-20" }]
+      }
+    }
+  ]
+}
