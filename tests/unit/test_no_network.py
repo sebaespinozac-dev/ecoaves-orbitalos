@@ -8,8 +8,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 NETWORK_OK = {ROOT / "datahub" / "http.py"}
-FORBIDDEN_EVERYWHERE = {"requests", "httpx", "earthaccess", "aiohttp", "subprocess"}
+# httpx solo vía dependencia opcional [server] / TestClient; no en el núcleo offline.
+FORBIDDEN_EVERYWHERE = {"requests", "earthaccess", "aiohttp", "subprocess"}
 FORBIDDEN_EXCEPT_HTTP = {"socket", "ssl", "http", "urllib"}
+# LiveHttpTransport solo en datahub/http.py y server.py (visor live).
+LIVE_TRANSPORT_OK = {ROOT / "datahub" / "http.py", ROOT / "server.py"}
 
 
 def _production_files() -> list[Path]:
@@ -40,6 +43,10 @@ def test_no_third_party_http_or_subprocess() -> None:
     assert offenders == []
 
 
-def test_live_transport_not_imported_by_tests_or_cli_default() -> None:
+def test_live_transport_not_imported_by_cli_default() -> None:
     cli = (ROOT / "cli.py").read_text(encoding="utf-8")
     assert "LiveHttpTransport" not in cli
+    # server.py sí usa LiveHttpTransport (visor con APIs públicas).
+    assert "LiveHttpTransport" in (ROOT / "server.py").read_text(encoding="utf-8")
+    for path in LIVE_TRANSPORT_OK:
+        assert path.exists()

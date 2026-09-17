@@ -13,8 +13,7 @@ from __future__ import annotations
 
 import re
 from datetime import date, datetime, timedelta, timezone
-from typing import Any, Mapping, Optional, Sequence
-from urllib.parse import quote
+from typing import Any, Mapping, Optional
 
 from datahub.http import HttpTransport
 
