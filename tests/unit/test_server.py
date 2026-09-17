@@ -11,6 +11,7 @@ import server
 from datahub.http import HttpResponse, UnexpectedHttpError
 from datahub.imagery import (
     COPERNICUS_STAC_SEARCH,
+    FIRMS_PUBLIC_SA_CSV,
     NOMINATIM_SEARCH,
     WORLDVIEW_SNAPSHOT,
 )
@@ -41,6 +42,16 @@ class _MockTransport:
                 url=url,
                 headers={"content-type": "application/json"},
                 body=(RECORDINGS / "nominatim_antofagasta.json").read_bytes(),
+            )
+        if method == "GET" and (
+            url.startswith(FIRMS_PUBLIC_SA_CSV)
+            or "firms.modaps.eosdis.nasa.gov/api/area/csv" in url
+        ):
+            return HttpResponse(
+                status=200,
+                url=url,
+                headers={"content-type": "text/csv"},
+                body=(RECORDINGS / "firms_sa_sample.csv").read_bytes(),
             )
         raise UnexpectedHttpError(f"no grabación para {method} {url}")
 
@@ -110,8 +121,42 @@ def test_sentinel(client: TestClient) -> None:
     assert products[0]["thumbnail_url"]
 
 
+def test_fires_endpoint(client: TestClient) -> None:
+    res = client.get("/api/fires", params={"lat": -23.6509, "lon": -70.3975, "days": 1})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["count"] == 2
+    assert data["fires"][0]["frp"] == 15.2
+
+
+def test_precipitation_endpoint(client: TestClient) -> None:
+    res = client.get(
+        "/api/precipitation",
+        params={"lat": -23.6509, "lon": -70.3975, "date": "2026-09-10"},
+    )
+    assert res.status_code == 200
+    assert res.headers["content-type"].startswith("image/jpeg")
+    assert res.content[:2] == b"\xff\xd8"
+
+
+def test_darksky_endpoint(client: TestClient) -> None:
+    res = client.get("/api/darksky", params={"lat": -23.6509, "lon": -70.3975})
+    assert res.status_code == 200
+    assert res.json()["level"] == "n/d"
+
+
+def test_layers_include_imerg(client: TestClient) -> None:
+    res = client.get("/api/layers")
+    ids = {item["id"] for item in res.json()}
+    assert "IMERG_Precipitation_Rate" in ids
+
+
 def test_index_serves_html(client: TestClient) -> None:
     res = client.get("/")
     assert res.status_code == 200
     assert "ECOAVES OrbitalOS" in res.text
     assert "leaflet" in res.text.lower()
+    assert "DARKSKY" in res.text
+    assert "FIRE" in res.text
+    assert "TAILINGS" in res.text
+    assert "RAVINE" in res.text

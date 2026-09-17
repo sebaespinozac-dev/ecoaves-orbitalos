@@ -11,13 +11,17 @@ from datahub.http import HttpResponse, RecordedTransport, UnexpectedHttpError
 from datahub.imagery import (
     AVAILABLE_LAYERS,
     COPERNICUS_STAC_SEARCH,
+    FIRMS_PUBLIC_SA_CSV,
     NOMINATIM_SEARCH,
     WORLDVIEW_SNAPSHOT,
     bbox_around,
+    darksky_status,
+    fetch_precipitation,
     fetch_snapshot,
     geocode,
     list_layers,
     parse_location_query,
+    search_fires,
     search_sentinel,
 )
 
@@ -28,8 +32,8 @@ def _imagery_transport() -> RecordedTransport:
     jpeg = (RECORDINGS / "worldview_snapshot.jpg").read_bytes()
     stac = (RECORDINGS / "stac_search_antofagasta.json").read_bytes()
     nominatim = (RECORDINGS / "nominatim_antofagasta.json").read_bytes()
+    firms = (RECORDINGS / "firms_sa_sample.csv").read_bytes()
 
-    # Match any Worldview snapshot GET (params vary by date/bbox)
     class FlexibleTransport:
         def request(self, method, url, *, headers=None, params=None, json_body=None, form=None):
             method = method.upper()
@@ -53,6 +57,16 @@ def _imagery_transport() -> RecordedTransport:
                     url=url,
                     headers={"content-type": "application/json"},
                     body=nominatim,
+                )
+            if method == "GET" and (
+                url.startswith(FIRMS_PUBLIC_SA_CSV)
+                or "firms.modaps.eosdis.nasa.gov/api/area/csv" in url
+            ):
+                return HttpResponse(
+                    status=200,
+                    url=url,
+                    headers={"content-type": "text/csv"},
+                    body=firms,
                 )
             raise UnexpectedHttpError(f"no grabación para {method} {url}")
 
@@ -79,7 +93,27 @@ def test_list_layers_has_viirs_and_modis() -> None:
     assert "VIIRS_SNPP_CorrectedReflectance_TrueColor" in ids
     assert "VIIRS_SNPP_DayNightBand_At_Sensor_Radiance" in ids
     assert "MODIS_Terra_CorrectedReflectance_TrueColor" in ids
+    assert "IMERG_Precipitation_Rate" in ids
     assert layers == AVAILABLE_LAYERS or len(layers) == len(AVAILABLE_LAYERS)
+
+
+def test_fetch_precipitation_uses_imerg_layer() -> None:
+    body = fetch_precipitation(_imagery_transport(), -23.6509, -70.3975, date_str="2026-09-10")
+    assert body[:2] == b"\xff\xd8"
+
+
+def test_search_fires_filters_bbox() -> None:
+    payload = search_fires(_imagery_transport(), -23.6509, -70.3975, days=1)
+    assert payload["count"] == 2
+    assert all(abs(f["lat"] + 23.65) < 1.1 for f in payload["fires"])
+    assert payload["fires"][0]["frp"] == 15.2
+
+
+def test_darksky_status_does_not_invent_level() -> None:
+    status = darksky_status(-23.6509, -70.3975, date_str="2026-09-10")
+    assert status["level"] == "n/d"
+    assert "normal" in status["levels"]
+    assert status["layer"].endswith("DayNightBand_At_Sensor_Radiance")
 
 
 def test_fetch_snapshot_returns_jpeg() -> None:
