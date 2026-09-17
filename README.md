@@ -43,6 +43,7 @@ FIRMS_MAP_KEY=
 | FIRE | NASA FIRMS VIIRS | Marcadores de focos |
 | TAILINGS | Sentinel-2 STAC | Comparar antes/después |
 | RAVINE | IMERG Precipitation Rate | Overlay precipitación |
+
 ## CLI offline (DARKSKY)
 
 ```bash
