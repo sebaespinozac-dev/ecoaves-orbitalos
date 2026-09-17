@@ -1,0 +1,257 @@
+:root {
+  --bg: #ffffff;
+  --surface: #f5f6f8;
+  --border: #d8dce3;
+  --text: #1c2330;
+  --muted: #5c6678;
+  --accent: #1f4e79;
+  --accent-hover: #163a5c;
+  --radius: 4px;
+  --font: "IBM Plex Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  min-width: 12rem;
+}
+
+.brand-name {
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--accent);
+  font-size: 1.05rem;
+}
+
+.brand-sub {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.search-form {
+  display: flex;
+  flex: 1;
+  gap: 0.5rem;
+  min-width: 16rem;
+}
+
+.search-form input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.55rem 0.75rem;
+  font: inherit;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.search-form button,
+.controls button {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 0.55rem 1rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.search-form button:hover,
+.controls button:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  min-height: calc(100vh - 18rem);
+  border-bottom: 1px solid var(--border);
+}
+
+.map-panel,
+.image-panel {
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-panel {
+  border-right: 1px solid var(--border);
+}
+
+#map {
+  flex: 1;
+  min-height: 380px;
+  background: var(--surface);
+}
+
+.location-label {
+  margin: 0;
+  padding: 0.55rem 0.9rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.image-panel {
+  padding: 0.9rem 1rem 1rem;
+  background: var(--bg);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: end;
+  margin-bottom: 0.85rem;
+}
+
+.controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.controls select,
+.controls input[type="date"] {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  min-width: 12rem;
+}
+
+.main-image {
+  margin: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.main-image img {
+  width: 100%;
+  height: min(52vh, 560px);
+  object-fit: contain;
+  background: #e8ebf0;
+  display: block;
+}
+
+.main-image figcaption {
+  padding: 0.55rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.gallery {
+  padding: 1rem 1.25rem 1.5rem;
+}
+
+.gallery-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.gallery-head h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.gallery-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.gallery-card img {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  display: block;
+  background: #e8ebf0;
+}
+
+.gallery-card .meta {
+  padding: 0.45rem 0.55rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.gallery-card .meta strong {
+  display: block;
+  color: var(--text);
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .map-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  #map {
+    min-height: 280px;
+  }
+}

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ECOAVES OrbitalOS — Visor satelital</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-name">ECOAVES OrbitalOS</span>
+      <span class="brand-sub">Visor satelital</span>
+    </div>
+    <form id="search-form" class="search-form" autocomplete="off">
+      <input
+        id="search-input"
+        type="search"
+        placeholder="Lugar o coordenadas (ej. Antofagasta o -23.6509, -70.3975)"
+        aria-label="Buscar lugar"
+      />
+      <button type="submit">Buscar</button>
+    </form>
+  </header>
+
+  <main class="layout">
+    <section class="map-panel" aria-label="Mapa">
+      <div id="map"></div>
+      <p id="location-label" class="location-label">Antofagasta, Chile</p>
+    </section>
+
+    <section class="image-panel" aria-label="Imágenes satelitales">
+      <div class="controls">
+        <label>
+          Capa
+          <select id="layer-select"></select>
+        </label>
+        <label>
+          Fecha
+          <input id="date-input" type="date" />
+        </label>
+        <button type="button" id="reload-imagery">Actualizar</button>
+      </div>
+
+      <figure class="main-image">
+        <img id="snapshot-img" alt="Imagen satelital NASA Worldview" />
+        <figcaption id="snapshot-meta">Cargando…</figcaption>
+      </figure>
+    </section>
+  </main>
+
+  <section class="gallery" aria-label="Historial Sentinel-2">
+    <div class="gallery-head">
+      <h2>Sentinel-2 — últimos 7 días</h2>
+      <p id="sentinel-status" class="muted">Buscando productos…</p>
+    </div>
+    <div id="sentinel-gallery" class="gallery-grid"></div>
+  </section>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
