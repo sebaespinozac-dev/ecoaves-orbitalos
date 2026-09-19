@@ -1,0 +1,4 @@
+{
+  "name": "ECOAVES OrbitalOS",
+  "install": "bash .cursor/install.sh"
+}
