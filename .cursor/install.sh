@@ -14,6 +14,8 @@ sudo apt-get install -y --no-install-recommends python3-pip fonts-dejavu-core
 
 # Ubuntu marks the system interpreter externally-managed (PEP 668); this VM is
 # disposable, so installing directly with --break-system-packages is intended.
-python3 -m pip install --break-system-packages --upgrade "pytest>=8.0" "pygame>=2.6"
+# Use sudo so packages land in /usr/local/lib/.../dist-packages (always on
+# sys.path for any user), which survives an environment build's fresh checkout.
+sudo python3 -m pip install --break-system-packages --upgrade "pytest>=8.0" "pygame>=2.6"
 
 echo "OrbitalOS environment ready. Run tests with: python3 -m pytest"
