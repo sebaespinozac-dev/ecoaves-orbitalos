@@ -1,24 +1,19 @@
 #!/usr/bin/env bash
 # Idempotent Cloud Agent bootstrap for ECOAVES OrbitalOS.
-# Runtime is stdlib-only; this prepares a venv with the dev (pytest) and
-# matrix (pygame) extras so tests and the visual HUD both work.
+#
+# The project runtime is stdlib-only. Tests need pytest; the visual Matrix HUD
+# needs pygame. We install these into the SYSTEM interpreter (not a repo-local
+# .venv): with environment builds the repo is re-checked out into /workspace on
+# each boot and .venv/ is gitignored, so a repo-local venv would not survive.
+# System site-packages live outside /workspace and persist in the build.
+# This mirrors the README's own `python3 -m pip install pytest pygame`.
 set -euo pipefail
 
-cd "$(dirname "$0")/.."
-
-# System packages: venv/pip tooling plus a monospace font pygame falls back to.
 sudo apt-get update -qq
-sudo apt-get install -y --no-install-recommends \
-  python3.12-venv \
-  python3-pip \
-  fonts-dejavu-core
+sudo apt-get install -y --no-install-recommends python3-pip fonts-dejavu-core
 
-# Create the virtualenv only if it is missing or broken.
-if [ ! -x .venv/bin/python ]; then
-  python3 -m venv .venv
-fi
+# Ubuntu marks the system interpreter externally-managed (PEP 668); this VM is
+# disposable, so installing directly with --break-system-packages is intended.
+python3 -m pip install --break-system-packages --upgrade "pytest>=8.0" "pygame>=2.6"
 
-.venv/bin/python -m pip install --upgrade pip
-.venv/bin/python -m pip install -e ".[dev,matrix]"
-
-echo "OrbitalOS environment ready. Use .venv/bin/python (or activate .venv)."
+echo "OrbitalOS environment ready. Run tests with: python3 -m pytest"
